@@ -34,15 +34,24 @@ MainWindow::MainWindow(QWidget *parent) :
 	{
 		std::vector <std::string> *vec=new std::vector<std::string>;
 		client->executeQuery("SELECT url FROM scraping_sites", *vec);
-
+		urlList=new QStringList();
 		for(uint8_t i=0;i<vec->size();i++)
 		{
 			QString url=QString::fromStdString(vec->at(i));
-			if(!url.indexOf(".pdf"))
+			qDebug()<<url;
+			if(url.indexOf(".pdf")==-1)
 	//тут должен хватать значения с базы, но пока так
-				view->load(url);
+				//loadNext();
+				//view->load(url);
+				urlList->append(url);
 		}
+		view->load(QUrl(urlList->at(currUrlIndex++)));
 	}
+}
+
+void MainWindow::loadNext()
+{
+	//view->load(currUrlIndex++);
 }
 
 void MainWindow::onLoadStarted()
@@ -59,8 +68,9 @@ void MainWindow::onLoadingFinished(bool ok)
 		if(file.exists())
 			filename=filename.replace('1','2');
 		qDebug()<<filename;
-		view->page()->printToPdf(filename);
-
+		//view->page()->printToPdf(filename);
+		if(currUrlIndex<urlList->size())
+			view->load(QUrl(urlList->at(currUrlIndex++)));
 	}
 }
 

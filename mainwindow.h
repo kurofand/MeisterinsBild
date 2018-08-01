@@ -21,6 +21,9 @@ private:
 	Ui::MainWindow *ui;
 	QWebEngineView *view;
 	MySQLClient *client;
+	uint8_t currUrlIndex=0;
+	void loadNext();
+	QStringList *urlList;
 private slots:
 	void onLoadingFinished(bool ok);
 	void onPdfPrintingFinished(QString name, bool success);
