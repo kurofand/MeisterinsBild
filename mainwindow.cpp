@@ -37,9 +37,10 @@ MainWindow::MainWindow(QWidget *parent) :
 
 		for(uint8_t i=0;i<vec->size();i++)
 		{
-			QUrl url=QString::fromStdString(vec->at(i));
+			QString url=QString::fromStdString(vec->at(i));
+			if(!url.indexOf(".pdf"))
 	//тут должен хватать значения с базы, но пока так
-			view->load(url);
+				view->load(url);
 		}
 	}
 }
