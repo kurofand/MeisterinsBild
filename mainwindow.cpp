@@ -62,10 +62,10 @@ void MainWindow::onLoadingFinished(bool ok)
 	if(ok)
 	{
 		//QString filename="/home/gin/pdfs/toMeCard/1.pdf";
-		std::vector<std::string> *vec=new std::string<std::vector>;
-		client->executeQuery("SELECT title FROM scraping_sites WHERE id="+currUrlIndex+1, *vec);
+		std::vector<std::string> *vec=new std::vector<std::string>;
+		client->executeQuery("SELECT title FROM scraping_sites WHERE id="+QString::number(currUrlIndex).toLatin1(), *vec);
 		QString name=QString::fromStdString(vec->at(0));
-		QString filename=QDir().currentPath()+"/pdfs/"+name;
+		QString filename=QDir().currentPath()+"/pdfs/"+name+".pdf";
 		QFile file(filename);
 		if(file.exists())
 			filename=filename.replace('1','2');
