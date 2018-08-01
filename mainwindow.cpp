@@ -62,6 +62,10 @@ void MainWindow::onLoadingFinished(bool ok)
 	}
 }
 
+void MainWindow::onLoadProgress(int progress)
+{
+	qDebug()<<progress;
+}
 bool MainWindow::compareFiles(QString currentTable)
 {
 	QString a("/home/gin/pdfs/"+currentTable+"/1.pdf"), b("/home/gin/pdfs/"+currentTable+"/2.pdf");
