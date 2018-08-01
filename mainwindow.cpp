@@ -12,14 +12,16 @@ MainWindow::MainWindow(QWidget *parent) :
 {
 	ui->setupUi(this);
 	view=new QWebEngineView();
+	connect(view, SIGNAL(loadStarted()), this, SLOT(onLoadStarted()));
 	connect(view, SIGNAL(loadFinished(bool)), this, SLOT(onLoadingFinished(bool)));
 	connect(view->page(), SIGNAL(pdfPrintingFinished(QString,bool)), this, SLOT(onPdfPrintingFinished(QString,bool)));
 	std::ifstream ini;
 	QString path=QDir::currentPath()+"/ini/connect-test.ini";
 	ini.open(path.toStdString());
+	std::string host, usr, pwd, db;
 	if(ini.is_open())
 	{
-		std::string host, usr, pwd, db;
+
 		ini>>host;
 		ini>>usr;
 		ini>>pwd;
@@ -32,8 +34,16 @@ MainWindow::MainWindow(QWidget *parent) :
 		client->executeQuery("SELECT url FROM scraping_sites", *vec);
 
 		for(uint8_t i=0;i<vec->size();i++)
+		{
+			QUrl url=QString::fromStdString(vec->at(i));
 	//тут должен хватать значения с базы, но пока так
-			view->load(QUrl(vec->at(i)));
+			view->load(url);
+		}
+}
+
+void MainWindow::onLoadStarted()
+{
+	qDebug()<<"Start loading "+view->url();
 }
 
 void MainWindow::onLoadingFinished(bool ok)

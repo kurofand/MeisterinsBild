@@ -24,6 +24,7 @@ private:
 private slots:
 	void onLoadingFinished(bool ok);
 	void onPdfPrintingFinished(QString name, bool success);
+	void onLoadStarted();
 };
 
 #endif // MAINWINDOW_H
