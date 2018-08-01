@@ -28,8 +28,9 @@ MainWindow::MainWindow(QWidget *parent) :
 		ini>>db;
 	}
 	ini.close();
-	*client=new MySQLClient(host.c_str(), usr.c_str(), pwd.c_str(), db.c_str());
+	client=new MySQLClient(host.c_str(), usr.c_str(), pwd.c_str(), db.c_str());
 	if(client->connect())
+	{
 		std::vector <std::string> *vec=new std::vector<std::string>;
 		client->executeQuery("SELECT url FROM scraping_sites", *vec);
 
@@ -39,11 +40,12 @@ MainWindow::MainWindow(QWidget *parent) :
 	//тут должен хватать значения с базы, но пока так
 			view->load(url);
 		}
+	}
 }
 
 void MainWindow::onLoadStarted()
 {
-	qDebug()<<"Start loading "+view->url();
+	qDebug()<<"Start loading "+view->url().toString();
 }
 
 void MainWindow::onLoadingFinished(bool ok)
