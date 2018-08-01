@@ -22,7 +22,6 @@ private:
 	QWebEngineView *view;
 	MySQLClient *client;
 	uint8_t currUrlIndex=0;
-	void loadNext();
 	QStringList *urlList;
 private slots:
 	void onLoadingFinished(bool ok);

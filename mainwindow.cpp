@@ -45,14 +45,12 @@ MainWindow::MainWindow(QWidget *parent) :
 				//view->load(url);
 				urlList->append(url);
 		}
+		//prepare directories fro pdfs
 		view->load(QUrl(urlList->at(currUrlIndex++)));
+		delete vec;
 	}
 }
 
-void MainWindow::loadNext()
-{
-	//view->load(currUrlIndex++);
-}
 
 void MainWindow::onLoadStarted()
 {
@@ -63,7 +61,11 @@ void MainWindow::onLoadingFinished(bool ok)
 {
 	if(ok)
 	{
-		QString filename="/home/gin/pdfs/toMeCard/1.pdf";
+		//QString filename="/home/gin/pdfs/toMeCard/1.pdf";
+		std::vector<std::string> *vec=new std::string<std::vector>;
+		client->executeQuery("SELECT title FROM scraping_sites WHERE id="+currUrlIndex+1, *vec);
+		QString name=QString::fromStdString(vec->at(0));
+		QString filename=QDir().currentPath()+"/pdfs/"+name;
 		QFile file(filename);
 		if(file.exists())
 			filename=filename.replace('1','2');
@@ -71,6 +73,7 @@ void MainWindow::onLoadingFinished(bool ok)
 		//view->page()->printToPdf(filename);
 		if(currUrlIndex<urlList->size())
 			view->load(QUrl(urlList->at(currUrlIndex++)));
+		delete vec;
 	}
 }
 
@@ -119,6 +122,7 @@ void MainWindow::onPdfPrintingFinished(QString name, bool success)
 
 MainWindow::~MainWindow()
 {
+	delete urlList;
 	delete client;
 	delete view;
 	delete ui;
