@@ -14,6 +14,7 @@ MainWindow::MainWindow(QWidget *parent) :
 	view=new QWebEngineView();
 	connect(view, SIGNAL(loadStarted()), this, SLOT(onLoadStarted()));
 	connect(view, SIGNAL(loadFinished(bool)), this, SLOT(onLoadingFinished(bool)));
+	connect(view, SIGNAL(loadProgress(int)), this, SLOT(onLoadProgress(int)));
 	connect(view->page(), SIGNAL(pdfPrintingFinished(QString,bool)), this, SLOT(onPdfPrintingFinished(QString,bool)));
 	std::ifstream ini;
 	QString path=QDir::currentPath()+"/ini/connect-test.ini";
