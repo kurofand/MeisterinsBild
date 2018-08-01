@@ -44,6 +44,22 @@ MainWindow::MainWindow(QWidget *parent) :
 				//loadNext();
 				//view->load(url);
 				urlList->append(url);
+			else
+			{
+				QString name, filename=QDir().currentPath();
+				client->executeQuery("SELECT title FROM scraping_sites WHERE id="+QString::number(currUrlIndex+1).toLatin1(),*vec);
+				name=QString::fromStdString(vec->at(0));
+				filename=filename+name+".pdf";
+				QFile file(filename);
+				if(file.exists())
+					filename=filename.replace(".pdf", "_new.pdf");
+				system("wget "+url+" -O "+filename);
+				bool compare=this->compareFiles(name);
+				if(compare)
+					qDebug()<<"same";
+				else
+					qDebug()<<"different";
+			}
 		}
 		//prepare directories fro pdfs
 		view->load(QUrl(urlList->at(currUrlIndex++)));
@@ -68,7 +84,7 @@ void MainWindow::onLoadingFinished(bool ok)
 		QString filename=QDir().currentPath()+"/pdfs/"+name+".pdf";
 		QFile file(filename);
 		if(file.exists())
-			filename=filename.replace('1','2');
+			filename=filename.replace('.pdf','_new.pdf');
 		qDebug()<<filename;
 		//view->page()->printToPdf(filename);
 		if(currUrlIndex<urlList->size())
@@ -83,7 +99,9 @@ void MainWindow::onLoadProgress(int progress)
 }
 bool MainWindow::compareFiles(QString currentTable)
 {
-	QString a("/home/gin/pdfs/"+currentTable+"/1.pdf"), b("/home/gin/pdfs/"+currentTable+"/2.pdf");
+
+
+	QString a(QDir.currentPath()+"/pdfs/"+currentTable+".pdf"), b(QDir.currentPath()+"/pdfs/"+currentTable+"_new.pdf");
 	Poppler::Document *c=Poppler::Document::load(a),
 			*d=Poppler::Document::load(b);
 	Poppler::Page *page1=c->page(0), *page2=d->page(0);
@@ -97,6 +115,7 @@ bool MainWindow::compareFiles(QString currentTable)
 		page1=c->page(++i);
 		page2=d->page(i);
 	}
+
 	delete c;
 	delete d;
 	return true;
@@ -105,23 +124,25 @@ bool MainWindow::compareFiles(QString currentTable)
 
 void MainWindow::onPdfPrintingFinished(QString name, bool success)
 {
-	if(success)
+	if((success)&&(name.indexOf("_new")!=-1))
 	{
-		QFile file(name);
-		if(file.exists())
-		{
-			bool compareRes=this->compareFiles("toMeCard");
+		std::vector<std::string> *vec=new std::vector<std::string>;
+		client->executeQuery("SELECT title FROM scraping_sites WHERE id="+QString::number(currUrlIndex).toLatin1(), *vec);
+		QString pdfName=QString::fromStdString(vec->at(0));
+
+		bool compareRes=this->compareFiles(pdfName);
 			//тут должны записывать итоги сравнения в базу
-			if(compareRes)
-				qDebug()<<"same";
-			else
-				qDebug()<<"different";
-		}
+		if(compareRes)
+			qDebug()<<"same";
+		else
+			qDebug()<<"different";
 	}
+	delete vec;
 }
 
 MainWindow::~MainWindow()
 {
+	client->closeConnection();
 	delete urlList;
 	delete client;
 	delete view;
