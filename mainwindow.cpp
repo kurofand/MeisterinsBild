@@ -47,18 +47,42 @@ MainWindow::MainWindow(QWidget *parent) :
 			else
 			{
 				QString name, filename=QDir().currentPath();
-				client->executeQuery("SELECT title FROM scraping_sites WHERE id="+QString::number(currUrlIndex+1).toLatin1(),*vec);
-				name=QString::fromStdString(vec->at(0));
-				filename=filename+name+".pdf";
+				std::vector<std::string> *res=new std::vector <std::string>;
+				client->executeQuery("SELECT title FROM scraping_sites WHERE url=\""+url.toLatin1()+"\"",*res);
+				name=QString::fromStdString(res->at(0));
+				//name=name.replace(" ", "");
+				filename=filename+"/pdfs/"+name+".pdf";
 				QFile file(filename);
-				if(file.exists())
-					filename=filename.replace(".pdf", "_new.pdf");
-				system("wget "+url.toLatin1()+" -O "+filename.toLatin1());
-				bool compare=this->compareFiles(name);
-				if(compare)
-					qDebug()<<"same";
-				else
-					qDebug()<<"different";
+				bool exists=file.exists();
+				if(exists)
+				{
+					filename.replace(".pdf", "_new.pdf");
+					if(QFile(filename).exists())
+					{
+						//filename=filename.replace("_new","");
+						QFile oldFile(filename.replace("_new",""));
+						oldFile.remove();
+						filename.replace(".pdf","_new.pdf");
+						oldFile.setFileName(filename);
+
+						oldFile.rename(filename.replace("_new",""));
+						//oldFile.setFileName(filename.replace("_new",""));
+						filename.replace(".pdf","_new.pdf");
+
+
+					}
+
+				}
+				system("wget "+url.toLatin1()+" -O "+filename.toUtf8());
+				if(exists)
+				{
+					bool compare=this->compareFiles(name.toUtf8());
+					if(compare)
+						qDebug()<<"same";
+					else
+						qDebug()<<"different";
+				}
+				delete res;
 			}
 		}
 		//prepare directories fro pdfs
@@ -81,14 +105,25 @@ void MainWindow::onLoadingFinished(bool ok)
 		std::vector<std::string> *vec=new std::vector<std::string>;
 		client->executeQuery("SELECT title FROM scraping_sites WHERE id="+QString::number(currUrlIndex).toLatin1(), *vec);
 		QString name=QString::fromStdString(vec->at(0));
-		QString filename=QDir().currentPath()+"/pdfs/"+name+".pdf";
+		QString filename=QString(QDir().currentPath()+"/pdfs/"+name+".pdf").toUtf8();
 		QFile file(filename);
 		if(file.exists())
-			filename=filename.replace(".pdf","_new.pdf");
+		{
+			filename.replace(".pdf","_new.pdf");
+			if(QFile(filename).exists())
+			{
+				QFile oldFile(filename.replace("_new",""));
+				oldFile.remove();
+
+				filename.replace(".pdf","_new.pdf");
+				oldFile.setFileName(filename);
+				oldFile.rename(filename.replace("_new",""));
+				filename.replace(".pdf","_new.pdf");
+			}
+		}
 		qDebug()<<filename;
-		//view->page()->printToPdf(filename);
-		if(currUrlIndex<urlList->size())
-			view->load(QUrl(urlList->at(currUrlIndex++)));
+		view->page()->printToPdf(filename);
+
 		delete vec;
 	}
 }
@@ -110,13 +145,20 @@ bool MainWindow::compareFiles(QString currentTable)
 		QImage img1=page1->renderToImage(), img2=page2->renderToImage();
 		if(!(img1.isNull()&&img2.isNull()))
 			if(img1!=img2)
+			{
+				qDebug()<<i;
+				img1.save(QDir().currentPath()+"/pdfs/1.png", "png");
+				img2.save(QDir().currentPath()+"/pdfs/2.png", "png");
+				qDebug()<<"compare finished";
 				return false;
+			}
 		page1=c->page(++i);
 		page2=d->page(i);
 	}
 
 	delete c;
 	delete d;
+	qDebug()<<"compare finished";
 	return true;
 
 }
@@ -129,14 +171,22 @@ void MainWindow::onPdfPrintingFinished(QString name, bool success)
 		client->executeQuery("SELECT title FROM scraping_sites WHERE id="+QString::number(currUrlIndex).toLatin1(), *vec);
 		QString pdfName=QString::fromStdString(vec->at(0));
 
-		bool compareRes=this->compareFiles(pdfName);
+		bool compareRes=this->compareFiles(pdfName.toUtf8());
 			//тут должны записывать итоги сравнения в базу
 		if(compareRes)
 			qDebug()<<"same";
 		else
+		{
 			qDebug()<<"different";
+			std::vector <std::string> *res=new std::vector<std::strng>;
+
+			delete res;
+		}
 		delete vec;
 	}
+	qDebug()<<"saving finished";
+	if(currUrlIndex<urlList->size())
+		view->load(QUrl(urlList->at(currUrlIndex++)));
 }
 
 MainWindow::~MainWindow()
