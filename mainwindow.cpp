@@ -53,7 +53,7 @@ MainWindow::MainWindow(QWidget *parent) :
 				QFile file(filename);
 				if(file.exists())
 					filename=filename.replace(".pdf", "_new.pdf");
-				system("wget "+url+" -O "+filename);
+				system("wget "+url.toLatin1()+" -O "+filename.toLatin1());
 				bool compare=this->compareFiles(name);
 				if(compare)
 					qDebug()<<"same";
@@ -84,7 +84,7 @@ void MainWindow::onLoadingFinished(bool ok)
 		QString filename=QDir().currentPath()+"/pdfs/"+name+".pdf";
 		QFile file(filename);
 		if(file.exists())
-			filename=filename.replace('.pdf','_new.pdf');
+			filename=filename.replace(".pdf","_new.pdf");
 		qDebug()<<filename;
 		//view->page()->printToPdf(filename);
 		if(currUrlIndex<urlList->size())
@@ -100,8 +100,7 @@ void MainWindow::onLoadProgress(int progress)
 bool MainWindow::compareFiles(QString currentTable)
 {
 
-
-	QString a(QDir.currentPath()+"/pdfs/"+currentTable+".pdf"), b(QDir.currentPath()+"/pdfs/"+currentTable+"_new.pdf");
+	QString a((QDir().currentPath()+"/pdfs/"+currentTable+".pdf")), b((QDir().currentPath()+"/pdfs/"+currentTable+"_new.pdf"));
 	Poppler::Document *c=Poppler::Document::load(a),
 			*d=Poppler::Document::load(b);
 	Poppler::Page *page1=c->page(0), *page2=d->page(0);
@@ -136,8 +135,8 @@ void MainWindow::onPdfPrintingFinished(QString name, bool success)
 			qDebug()<<"same";
 		else
 			qDebug()<<"different";
+		delete vec;
 	}
-	delete vec;
 }
 
 MainWindow::~MainWindow()
