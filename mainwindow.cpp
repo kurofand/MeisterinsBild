@@ -150,6 +150,10 @@ bool MainWindow::compareFiles(QString currentTable)
 				img1.save(QDir().currentPath()+"/pdfs/1.png", "png");
 				img2.save(QDir().currentPath()+"/pdfs/2.png", "png");
 				qDebug()<<"compare finished";
+				std::vector<std::string> *vec=new std::vector<std::string>;
+				QDateTime time=QDateTime::currentDateTime();
+				client->executeQuery("UPDATE scraping_sites SET changed=1, http_status_code=200, accessed_at=\""+time.toString("yyyy-MM-dd hh:mm:ss").toLatin1()+"\" different_page_num="+QString::number(i+1).toLatin1()+" WHERE title=\""+currentTable.toLatin1()+"\"", *vec);
+				delete vec;
 				return false;
 			}
 		page1=c->page(++i);
@@ -178,7 +182,7 @@ void MainWindow::onPdfPrintingFinished(QString name, bool success)
 		else
 		{
 			qDebug()<<"different";
-			std::vector <std::string> *res=new std::vector<std::strng>;
+			std::vector <std::string> *res=new std::vector<std::string>;
 
 			delete res;
 		}
