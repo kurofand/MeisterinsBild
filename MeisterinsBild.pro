@@ -7,7 +7,7 @@
 QT       += core gui webenginewidgets
 
 INCLUDEPATH += -I/usr/include/poppler/qt5 -I/usr/local/include/cppconn
-LIBS += -L/usr/lib -lpoppler-qt5 -lmysqlcppconn
+LIBS += -L/usr/lib -lpoppler-qt5 -lmysqlcppconn -lcurl
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 

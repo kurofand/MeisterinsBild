@@ -17,6 +17,11 @@ MainWindow::MainWindow(QWidget *parent) :
 	connect(view, SIGNAL(loadProgress(int)), this, SLOT(onLoadProgress(int)));
 	connect(view->page(), SIGNAL(pdfPrintingFinished(QString,bool)), this, SLOT(onPdfPrintingFinished(QString,bool)));
 	connect(this, SIGNAL(close()), this, SLOT(onClose()));
+
+	curl_global_init(CURL_GLOBAL_ALL);
+	curl=curl_easy_init();
+
+
 	std::ifstream ini;
 	QString path=QDir::currentPath()+"/ini/connect-test.ini";
 	ini.open(path.toStdString());
@@ -41,6 +46,10 @@ MainWindow::MainWindow(QWidget *parent) :
 		{
 			QString url=QString::fromStdString(vec->at(i));
 			qDebug()<<url;
+			int responseCode=returnHttpCode(url.toLatin1());
+			client->executeQuery("UPDATE scraping_sites SET http_status_code="+QString::number(responseCode).toLatin1()+" WHERE url=\""+url.toLatin1()+"\"", *vec);
+			if(responseCode!=200)
+				continue;
 			if(url.indexOf(".pdf")==-1)
 	//тут должен хватать значения с базы, но пока так
 				//loadNext();
@@ -92,6 +101,19 @@ MainWindow::MainWindow(QWidget *parent) :
 		view->load(QUrl(urlList->at(currUrlIndex++)));
 		delete vec;
 	}
+}
+
+int MainWindow::returnHttpCode(const char *url)
+{
+	int res=0;
+	curl_easy_setopt(curl, CURLOPT_URL, url);
+	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, *[](char* buf, size_t size, size_t nmemb, void* up)
+	{
+		return size*nmemb;
+	});
+	curl_easy_perform(curl);
+	curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &res);
+	return res;
 }
 
 void MainWindow::onClose()
@@ -213,6 +235,8 @@ void MainWindow::onPdfPrintingFinished(QString name, bool success)
 MainWindow::~MainWindow()
 {
 	qDebug()<<"enter to destructor";
+	curl_easy_cleanup(curl);
+	curl_global_cleanup();
 	client->closeConnection();
 	delete urlList;
 	delete client;

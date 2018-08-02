@@ -4,6 +4,7 @@
 #include <QMainWindow>
 #include <QWebEngineView>
 #include "mysqlClient.hpp"
+#include "curl/curl.h"
 namespace Ui {
 class MainWindow;
 }
@@ -23,6 +24,8 @@ private:
 	MySQLClient *client;
 	uint8_t currUrlIndex=0, recordsCount=0, proceed=0;
 	QStringList *urlList;
+	CURL *curl;
+	int returnHttpCode(const char* url);
 private slots:
 	void onLoadingFinished(bool ok);
 	void onPdfPrintingFinished(QString name, bool success);
