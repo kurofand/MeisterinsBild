@@ -21,13 +21,16 @@ private:
 	Ui::MainWindow *ui;
 	QWebEngineView *view;
 	MySQLClient *client;
-	uint8_t currUrlIndex=0;
+	uint8_t currUrlIndex=0, recordsCount=0, proceed=0;
 	QStringList *urlList;
 private slots:
 	void onLoadingFinished(bool ok);
 	void onPdfPrintingFinished(QString name, bool success);
 	void onLoadStarted();
 	void onLoadProgress(int progress);
+	void onClose();
+signals:
+	void close();
 };
 
 #endif // MAINWINDOW_H

@@ -16,6 +16,7 @@ MainWindow::MainWindow(QWidget *parent) :
 	connect(view, SIGNAL(loadFinished(bool)), this, SLOT(onLoadingFinished(bool)));
 	connect(view, SIGNAL(loadProgress(int)), this, SLOT(onLoadProgress(int)));
 	connect(view->page(), SIGNAL(pdfPrintingFinished(QString,bool)), this, SLOT(onPdfPrintingFinished(QString,bool)));
+	connect(this, SIGNAL(close()), this, SLOT(onClose()));
 	std::ifstream ini;
 	QString path=QDir::currentPath()+"/ini/connect-test.ini";
 	ini.open(path.toStdString());
@@ -35,6 +36,7 @@ MainWindow::MainWindow(QWidget *parent) :
 		std::vector <std::string> *vec=new std::vector<std::string>;
 		client->executeQuery("SELECT url FROM scraping_sites", *vec);
 		urlList=new QStringList();
+		recordsCount=vec->size();
 		for(uint8_t i=0;i<vec->size();i++)
 		{
 			QString url=QString::fromStdString(vec->at(i));
@@ -82,6 +84,7 @@ MainWindow::MainWindow(QWidget *parent) :
 					else
 						qDebug()<<"different";
 				}
+				emit close();
 				delete res;
 			}
 		}
@@ -91,6 +94,15 @@ MainWindow::MainWindow(QWidget *parent) :
 	}
 }
 
+void MainWindow::onClose()
+{
+	proceed++;
+	if(recordsCount==proceed)
+	{
+		qDebug()<<"all records are proceed. closing...";
+		QApplication::quit();
+	}
+}
 
 void MainWindow::onLoadStarted()
 {
@@ -140,6 +152,8 @@ bool MainWindow::compareFiles(QString currentTable)
 			*d=Poppler::Document::load(b);
 	Poppler::Page *page1=c->page(0), *page2=d->page(0);
 	uint8_t i=0;
+	QDateTime time=QDateTime::currentDateTime();
+	std::vector<std::string> *vec=new std::vector<std::string>;
 	while((page1!=0)&&(page2!=0))
 	{
 		QImage img1=page1->renderToImage(), img2=page2->renderToImage();
@@ -147,12 +161,12 @@ bool MainWindow::compareFiles(QString currentTable)
 			if(img1!=img2)
 			{
 				qDebug()<<i;
-				img1.save(QDir().currentPath()+"/pdfs/1.png", "png");
-				img2.save(QDir().currentPath()+"/pdfs/2.png", "png");
+				img1.save(QDir().currentPath()+"/pdfs/"+currentTable.toUtf8()+"1.png", "png");
+				img2.save(QDir().currentPath()+"/pdfs/"+currentTable.toUtf8()+"2.png", "png");
 				qDebug()<<"compare finished";
-				std::vector<std::string> *vec=new std::vector<std::string>;
-				QDateTime time=QDateTime::currentDateTime();
-				client->executeQuery("UPDATE scraping_sites SET changed=1, http_status_code=200, accessed_at=\""+time.toString("yyyy-MM-dd hh:mm:ss").toLatin1()+"\" different_page_num="+QString::number(i+1).toLatin1()+" WHERE title=\""+currentTable.toLatin1()+"\"", *vec);
+
+
+				client->executeQuery("UPDATE scraping_sites SET changed=1, http_status_code=200, accessed_at=\""+time.toString("yyyy-MM-dd hh:mm:ss").toLatin1()+"\", different_page_num="+QString::number(i+1).toLatin1()+" WHERE title=\""+currentTable.toUtf8()+"\"", *vec);
 				delete vec;
 				return false;
 			}
@@ -162,6 +176,8 @@ bool MainWindow::compareFiles(QString currentTable)
 
 	delete c;
 	delete d;
+	client->executeQuery("UPDATE scraping_sites SET changed=0, http_status_code=200, accessed_at=\""+time.toString("yyyy-MM-dd hh:mm:ss").toLatin1()+"\" WHERE title=\""+currentTable.toUtf8()+"\"", *vec);
+	delete vec;
 	qDebug()<<"compare finished";
 	return true;
 
@@ -191,10 +207,12 @@ void MainWindow::onPdfPrintingFinished(QString name, bool success)
 	qDebug()<<"saving finished";
 	if(currUrlIndex<urlList->size())
 		view->load(QUrl(urlList->at(currUrlIndex++)));
+	emit close();
 }
 
 MainWindow::~MainWindow()
 {
+	qDebug()<<"enter to destructor";
 	client->closeConnection();
 	delete urlList;
 	delete client;
