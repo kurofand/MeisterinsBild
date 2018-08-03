@@ -4,8 +4,10 @@
 #
 #-------------------------------------------------
 
-QT       += core gui webenginewidgets
-
+QT	    += core webenginewidgets
+QT	    -= gui
+CONFIG	    += c++11 console
+CONFIG	    -= app_bundle
 INCLUDEPATH += -I/usr/include/poppler/qt5 -I/usr/local/include/cppconn
 LIBS += -L/usr/lib -lpoppler-qt5 -lmysqlcppconn -lcurl
 
